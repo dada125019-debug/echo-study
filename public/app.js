@@ -459,7 +459,46 @@ $$('.source-tab').forEach(button => button.addEventListener('click', () => {
   $$('.source-tab').forEach(x => x.classList.toggle('active', x === button));
   $$('.source-panel').forEach(x => x.classList.toggle('active', x.dataset.panel === button.dataset.source));
   setStatus('');
+  if (button.dataset.source === 'youtube-auth') refreshYoutubeCookiesStatus();
 }));
+
+async function refreshYoutubeCookiesStatus() {
+  try {
+    const data = await request('/api/youtube/cookies');
+    $('#youtubeCookiesStatus').textContent = data.configured ? '已配置 YouTube Cookie，可重新尝试视频。' : '尚未配置 YouTube Cookie。';
+  } catch (error) {
+    $('#youtubeCookiesStatus').textContent = error.message;
+  }
+}
+
+$('#youtubeCookiesInput').addEventListener('change', async event => {
+  const file = event.target.files[0];
+  if (!file) return;
+  try {
+    const content = await file.text();
+    await request('/api/youtube/cookies', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ content })
+    });
+    setStatus('YouTube 授权已保存，请重新加载视频。');
+    await refreshYoutubeCookiesStatus();
+  } catch (error) {
+    setStatus(error.message, true);
+  } finally {
+    event.target.value = '';
+  }
+});
+
+$('#clearYoutubeCookies').addEventListener('click', async () => {
+  try {
+    await request('/api/youtube/cookies', { method: 'DELETE' });
+    setStatus('YouTube 授权已清除。');
+    await refreshYoutubeCookiesStatus();
+  } catch (error) {
+    setStatus(error.message, true);
+  }
+});
 
 $('#videoInput').addEventListener('change', async event => {
   const file = event.target.files[0];
