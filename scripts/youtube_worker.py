@@ -39,6 +39,11 @@ def youtube_options(options=None):
     merged = dict(options or {})
     if YOUTUBE_COOKIES_FILE.is_file():
         merged["cookiefile"] = str(YOUTUBE_COOKIES_FILE)
+    else:
+        # Anonymous path: mweb can use the local PO-token provider. The other
+        # clients are useful fallbacks for videos that do not require a token.
+        youtube_args = merged.setdefault("extractor_args", {}).setdefault("youtube", {})
+        youtube_args.setdefault("player_client", ["mweb", "android_vr", "web_embedded"])
     user_agent = os.environ.get("YOUTUBE_USER_AGENT", "").strip()
     if user_agent:
         merged.setdefault("http_headers", {})["User-Agent"] = user_agent
