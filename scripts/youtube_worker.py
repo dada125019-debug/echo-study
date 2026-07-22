@@ -1,7 +1,6 @@
 import json
 import os
 import re
-import shutil
 import sys
 import tempfile
 import urllib.request
@@ -11,6 +10,7 @@ import yt_dlp
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
+YOUTUBE_COOKIES_FILE = Path(os.environ.get("YOUTUBE_COOKIES_FILE", PROJECT_ROOT / "media-cache" / "youtube-cookies.txt"))
 ARGOS_DIR = Path(os.environ.get("ARGOS_PACKAGES_DIR", Path(tempfile.gettempdir()) / "echo-study-argos"))
 os.environ.setdefault("XDG_CONFIG_HOME", str(Path(tempfile.gettempdir()) / "echo-study-argos-config"))
 os.environ.setdefault("XDG_DATA_HOME", str(Path(tempfile.gettempdir()) / "echo-study-argos-data"))
@@ -33,6 +33,16 @@ def fetch_json(url, headers=None):
     request = urllib.request.Request(url, headers=headers or {"User-Agent": "Mozilla/5.0"})
     with urllib.request.urlopen(request, timeout=20) as response:
         return json.loads(response.read().decode("utf-8"))
+
+
+def youtube_options(options=None):
+    merged = dict(options or {})
+    if YOUTUBE_COOKIES_FILE.is_file():
+        merged["cookiefile"] = str(YOUTUBE_COOKIES_FILE)
+    user_agent = os.environ.get("YOUTUBE_USER_AGENT", "").strip()
+    if user_agent:
+        merged.setdefault("http_headers", {})["User-Agent"] = user_agent
+    return merged
 
 
 def choose_video(info):
@@ -111,11 +121,15 @@ def caption_cues(info):
 def ensure_argos_package():
     if any(ARGOS_DIR.glob("translate-en_zh-*")):
         return
-    bundled = PROJECT_ROOT / ".argos-packages" / "translate-en_zh-1_9"
-    if not bundled.exists():
-        raise RuntimeError("未找到本地英译中模型")
+    from argostranslate import package
+
     ARGOS_DIR.mkdir(parents=True, exist_ok=True)
-    shutil.copytree(bundled, installed)
+    package.update_package_index()
+    available = package.get_available_packages()
+    english_chinese = next((item for item in available if item.from_code == "en" and item.to_code == "zh"), None)
+    if english_chinese is None:
+        raise RuntimeError("没有可用的英译中模型")
+    package.install_from_path(english_chinese.download())
 
 
 def translate_cues(input_path, output_path):
@@ -159,7 +173,7 @@ def translate_cues(input_path, output_path):
 
 
 def inspect_video(url):
-    options = {"quiet": True, "no_warnings": True, "skip_download": True, "noplaylist": True}
+    options = youtube_options({"quiet": True, "no_warnings": True, "skip_download": True, "noplaylist": True})
     with yt_dlp.YoutubeDL(options) as ydl:
         info = ydl.extract_info(url, download=False)
     video = choose_video(info)
@@ -176,13 +190,13 @@ def inspect_video(url):
 
 
 def search_videos(query):
-    options = {
+    options = youtube_options({
         "quiet": True,
         "no_warnings": True,
         "skip_download": True,
         "extract_flat": True,
         "noplaylist": False,
-    }
+    })
     with yt_dlp.YoutubeDL(options) as ydl:
         result = ydl.extract_info(f"ytsearch12:{query}", download=False)
     items = []
@@ -208,13 +222,13 @@ def transcribe(url, cache_root):
 
     cache_dir = Path(cache_root).resolve()
     cache_dir.mkdir(parents=True, exist_ok=True)
-    options = {
+    options = youtube_options({
         "quiet": True,
         "no_warnings": True,
         "noplaylist": True,
         "format": "bestaudio[ext=m4a]/bestaudio/best",
         "outtmpl": str(cache_dir / "audio.%(ext)s"),
-    }
+    })
     existing = next(cache_dir.glob("audio.*"), None)
     if existing is None:
         with yt_dlp.YoutubeDL(options) as ydl:
