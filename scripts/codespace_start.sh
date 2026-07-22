@@ -5,6 +5,11 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT_DIR"
 
 echo "[1/5] Installing FFmpeg and system libraries..."
+for YARN_SOURCE in /etc/apt/sources.list.d/yarn.list /etc/apt/sources.list.d/yarn.sources; do
+  if [[ -f "$YARN_SOURCE" ]]; then
+    sudo mv -f "$YARN_SOURCE" "$YARN_SOURCE.disabled"
+  fi
+done
 sudo apt-get update -qq
 sudo apt-get install -y -qq ffmpeg libgomp1 python3-venv curl openssl
 
