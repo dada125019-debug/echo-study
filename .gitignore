@@ -1,0 +1,8 @@
+media-cache/
+*.log
+.argos-*/
+.env
+.tools/
+ui-check-*.png
+__pycache__/
+*.pyc

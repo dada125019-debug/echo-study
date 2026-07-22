@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0d0e11">
+  <title>Echo Study · 视频精听</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='30' fill='%23258df4'/%3E%3Cpath d='M26 20l20 12-20 12z' fill='white'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="app-shell">
+    <header class="topbar">
+      <div class="brand-group">
+        <button class="icon-button" id="backButton" aria-label="返回">←</button>
+        <div>
+          <div class="eyebrow">VIDEO IMMERSION</div>
+          <h1 id="lessonTitle">第 1 期</h1>
+        </div>
+      </div>
+      <div class="progress-copy">
+        <span>上次学习：<strong id="lastStudied">刚刚</strong></span>
+        <span class="streak">● 连续学习 <strong id="studyMinutes">0</strong> 分钟</span>
+      </div>
+      <div class="header-actions">
+        <button class="logout-button" id="logoutButton">退出</button>
+        <button class="source-button" id="openSource"><span>＋</span> 添加视频</button>
+      </div>
+    </header>
+
+    <section class="workspace">
+      <section class="player-pane" aria-label="视频学习区">
+        <div class="video-frame" id="videoFrame">
+          <video id="video" playsinline preload="metadata"></video>
+          <iframe id="embedPlayer" class="embed-player" title="第三方公开视频播放器" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen hidden></iframe>
+          <div class="empty-state" id="emptyState">
+            <div class="empty-mark">▶</div>
+            <strong>添加一段视频，开始精听</strong>
+            <span>支持本地文件、视频直链与公开素材搜索</span>
+            <button class="primary-button" id="emptyAdd">选择视频来源</button>
+          </div>
+          <div class="video-caption" id="videoCaption" hidden></div>
+          <div class="media-notice" id="mediaNotice" hidden>
+            <strong id="mediaNoticeTitle">视频画面无法显示</strong>
+            <span id="mediaNoticeText"></span>
+          </div>
+          <div class="video-progress-control" id="videoProgressControl" hidden>
+            <span id="videoCurrentTime">00:00</span>
+            <input id="videoSeek" type="range" min="0" max="1000" value="0" step="1" aria-label="视频播放进度">
+            <span id="videoDuration">00:00</span>
+          </div>
+        </div>
+
+        <div class="transport" aria-label="播放控制">
+          <button class="round active" id="captionToggleButton" aria-pressed="true"><span>CC</span><small>字幕开</small></button>
+          <button class="round active" id="translationButton" aria-pressed="true"><span>译</span><small>翻译开</small></button>
+          <button class="round" id="fontButton"><span>A</span><small>字号</small></button>
+          <button class="round" id="previousButton"><span>←</span><small>上一句</small></button>
+          <button class="round" id="repeatButton"><span>↻</span><small>重播</small></button>
+          <button class="round primary" id="playButton"><span>▶</span><small>播放</small></button>
+          <button class="round" id="nextButton"><span>→</span><small>下一句</small></button>
+          <button class="round" id="speedButton"><span id="speedLabel">1×</span><small>倍速</small></button>
+          <button class="round" id="loopButton" aria-pressed="false"><span>1</span><small>单句</small></button>
+          <button class="round" id="captionImport"><span>SRT</span><small>导入</small></button>
+        </div>
+
+        <article class="focus-card" id="focusCard">
+          <div class="focus-meta"><span id="focusNumber">01</span><span id="focusTime">00:00 — 00:04</span></div>
+          <p class="focus-english" id="focusEnglish">Choose a video and make every sentence count.</p>
+          <p class="focus-chinese" id="focusChinese">选择一个视频，认真听懂每一句。</p>
+          <div class="highlight-legend" aria-label="重点标记图例">
+            <span class="legend-collocation">四六级词组</span>
+            <span class="legend-phrase">短语 / 短语动词</span>
+            <span class="legend-keyword cet4">CET4 重点词</span>
+            <span class="legend-keyword cet6">CET6 重点词</span>
+          </div>
+        </article>
+      </section>
+
+      <aside class="transcript-pane" aria-label="动态字幕">
+        <div class="transcript-header">
+          <div><span class="eyebrow">LIVE TRANSCRIPT</span><h2>动态字幕</h2></div>
+          <div class="view-tabs" role="tablist" aria-label="字幕筛选">
+            <button class="tab active" data-filter="all" role="tab" aria-selected="true">全部</button>
+            <button class="tab" data-filter="favorite" role="tab" aria-selected="false">收藏</button>
+          </div>
+        </div>
+        <div class="timeline"><span id="progressBar"></span></div>
+        <div class="transcript-list" id="transcriptList"></div>
+      </aside>
+    </section>
+  </main>
+
+  <dialog id="sourceDialog" class="source-dialog">
+    <form method="dialog" class="dialog-head">
+      <div><span class="eyebrow">VIDEO SOURCE</span><h2>添加学习素材</h2></div>
+      <button class="icon-button" aria-label="关闭">×</button>
+    </form>
+    <div class="source-tabs" role="tablist">
+      <button type="button" class="source-tab active" data-source="local">本地上传</button>
+      <button type="button" class="source-tab" data-source="link">网页链接</button>
+      <button type="button" class="source-tab" data-source="search">关键词搜索</button>
+    </div>
+    <section class="source-panel active" data-panel="local">
+      <label class="drop-zone" for="videoInput" id="dropZone">
+        <span class="upload-icon">↑</span>
+        <strong>选择或拖入本地视频</strong>
+        <span>MP4、WebM、OGG 等浏览器支持的格式</span>
+      </label>
+      <input id="videoInput" type="file" accept="video/*" hidden>
+    </section>
+    <section class="source-panel" data-panel="link">
+      <label for="urlInput">视频直链或包含公开视频的网页</label>
+      <div class="input-row"><input id="urlInput" type="url" placeholder="https://example.com/video"><button id="extractButton" type="button" class="primary-button">提取视频</button></div>
+      <p class="hint">仅提取页面公开声明的视频地址，不绕过登录、DRM 或平台访问限制。</p>
+    </section>
+    <section class="source-panel" data-panel="search">
+      <label for="searchInput">搜索 YouTube 公开学习视频</label>
+      <div class="input-row"><input id="searchInput" type="search" placeholder="例如：English conversation"><button id="searchButton" type="button" class="primary-button">搜索</button></div>
+      <div class="search-results" id="searchResults"></div>
+    </section>
+    <p class="dialog-status" id="dialogStatus" aria-live="polite"></p>
+  </dialog>
+
+  <input id="captionInput" type="file" accept=".srt,.vtt,text/vtt" hidden>
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,13 @@
+{
+  "name": "echo-study",
+  "version": "1.0.0",
+  "private": true,
+  "description": "A tablet-first video intensive-listening workspace",
+  "scripts": {
+    "start": "node server.js",
+    "check": "node --check server.js && node --check public/app.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

@@ -1,0 +1,8 @@
+.git
+.agents
+.argos-*
+media-cache
+*.log
+ui-check-*.png
+__pycache__
+*.pyc

@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: echo-study
+    runtime: docker
+    plan: standard
+    healthCheckPath: /api/health
+    envVars:
+      - key: APP_USERNAME
+        value: "111"
+      - key: NODE_ENV
+        value: production
+      - key: APP_PASSWORD
+        sync: false
+      - key: SESSION_SECRET
+        generateValue: true
