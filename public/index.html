@@ -100,6 +100,7 @@
       <button type="button" class="source-tab active" data-source="local">本地上传</button>
       <button type="button" class="source-tab" data-source="link">网页链接</button>
       <button type="button" class="source-tab" data-source="search">关键词搜索</button>
+      <button type="button" class="source-tab" data-source="youtube-auth">YouTube 授权</button>
     </div>
     <section class="source-panel active" data-panel="local">
       <label class="drop-zone" for="videoInput" id="dropZone">
@@ -118,6 +119,15 @@
       <label for="searchInput">搜索 YouTube 公开学习视频</label>
       <div class="input-row"><input id="searchInput" type="search" placeholder="例如：English conversation"><button id="searchButton" type="button" class="primary-button">搜索</button></div>
       <div class="search-results" id="searchResults"></div>
+    </section>
+    <section class="source-panel" data-panel="youtube-auth">
+      <label for="youtubeCookiesInput">上传 Netscape 格式的 YouTube cookies.txt</label>
+      <div class="input-row">
+        <input id="youtubeCookiesInput" type="file" accept=".txt,text/plain">
+        <button id="clearYoutubeCookies" type="button">清除授权</button>
+      </div>
+      <p class="hint">仅保存到当前 Codespace 的忽略目录，不会提交到 GitHub。建议使用专门的非主账号 Cookie。</p>
+      <p class="hint" id="youtubeCookiesStatus">尚未检查授权状态。</p>
     </section>
     <p class="dialog-status" id="dialogStatus" aria-live="polite"></p>
   </dialog>
