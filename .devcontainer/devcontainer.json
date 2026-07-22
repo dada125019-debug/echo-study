@@ -1,11 +1,8 @@
 {
   "name": "Echo Study",
-  "build": {
-    "dockerfile": "Dockerfile",
-    "context": ".."
-  },
+  "image": "mcr.microsoft.com/devcontainers/universal:2",
   "overrideCommand": true,
-  "remoteUser": "node",
+  "remoteUser": "codespace",
   "forwardPorts": [7860],
   "portsAttributes": {
     "7860": {
