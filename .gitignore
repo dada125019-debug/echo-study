@@ -3,6 +3,8 @@ media-cache/
 .argos-*/
 .env
 .tools/
+.venv/
+.codespace-runtime/
 ui-check-*.png
 __pycache__/
 *.pyc
