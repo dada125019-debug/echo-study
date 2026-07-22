@@ -1,7 +1,7 @@
 {
   "name": "Echo Study",
   "build": {
-    "dockerfile": "../Dockerfile",
+    "dockerfile": "Dockerfile",
     "context": ".."
   },
   "overrideCommand": true,
