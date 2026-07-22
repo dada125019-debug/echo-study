@@ -5,7 +5,7 @@ ENV PYTHONUNBUFFERED=1 \
     PYTHONIOENCODING=utf-8 \
     PYTHON_BIN=/opt/venv/bin/python \
     HOST=0.0.0.0 \
-    PORT=4173 \
+    PORT=7860 \
     NODE_ENV=production \
     ARGOS_PACKAGES_DIR=/app/.argos-packages \
     ARGOS_CHUNK_TYPE=MINISBD \
@@ -30,5 +30,5 @@ RUN mkdir -p media-cache .argos-packages .argos-config .argos-data .argos-cache 
     && chown -R node:node /app
 
 USER node
-EXPOSE 4173
+EXPOSE 7860
 CMD ["node", "server.js"]
