@@ -14,6 +14,7 @@ const LOCAL_PYTHON = 'C:\\Users\\Junda Mou\\.cache\\codex-runtimes\\codex-primar
 const PYTHON = process.env.PYTHON_BIN || (fs.existsSync(LOCAL_PYTHON) ? LOCAL_PYTHON : process.platform === 'win32' ? 'python' : 'python3');
 const YOUTUBE_WORKER = path.join(__dirname, 'scripts', 'youtube_worker.py');
 const MEDIA_CACHE = path.join(__dirname, 'media-cache');
+const YOUTUBE_COOKIES_PATH = path.join(MEDIA_CACHE, 'youtube-cookies.txt');
 const APP_USERNAME = process.env.APP_USERNAME || '111';
 const APP_PASSWORD = process.env.APP_PASSWORD || '';
 const SESSION_SECRET = process.env.SESSION_SECRET || crypto.randomBytes(32).toString('hex');
@@ -132,6 +133,19 @@ async function readBody(req) {
     });
     req.on('error', reject);
   });
+}
+
+function validateYoutubeCookies(content) {
+  const normalized = String(content || '').replace(/\r\n/g, '\n').trim() + '\n';
+  if (normalized.length > 500_000) throw new Error('Cookie 文件过大');
+  const firstLine = normalized.split('\n', 1)[0];
+  if (!/^# (?:Netscape )?HTTP Cookie File/i.test(firstLine)) {
+    throw new Error('请上传 Netscape cookies.txt 文件');
+  }
+  if (!/(?:^|\n)(?:#HttpOnly_)?\.?youtube\.com\t/im.test(normalized) && !/(?:^|\n)(?:#HttpOnly_)?\.?google\.com\t/im.test(normalized)) {
+    throw new Error('Cookie 文件中没有 YouTube/Google 登录记录');
+  }
+  return normalized;
 }
 
 function decodeHtml(s = '') {
@@ -440,6 +454,21 @@ async function api(req, res, url) {
     if (req.method === 'GET' && url.pathname === '/api/health') return json(res, 200, { ok: true });
     if (url.pathname.startsWith('/api/auth/')) return await authApi(req, res, url);
     if (!isAuthenticated(req)) return json(res, 401, { error: '请先登录' });
+    if (url.pathname === '/api/youtube/cookies' && req.method === 'GET') {
+      return json(res, 200, { configured: fs.existsSync(YOUTUBE_COOKIES_PATH) });
+    }
+    if (url.pathname === '/api/youtube/cookies' && req.method === 'POST') {
+      const body = await readBody(req);
+      const content = validateYoutubeCookies(body.content);
+      fs.mkdirSync(MEDIA_CACHE, { recursive: true });
+      fs.writeFileSync(YOUTUBE_COOKIES_PATH, content, { encoding: 'utf8', mode: 0o600 });
+      try { fs.chmodSync(YOUTUBE_COOKIES_PATH, 0o600); } catch { /* Windows has no POSIX modes. */ }
+      return json(res, 200, { configured: true });
+    }
+    if (url.pathname === '/api/youtube/cookies' && req.method === 'DELETE') {
+      try { fs.unlinkSync(YOUTUBE_COOKIES_PATH); } catch (error) { if (error.code !== 'ENOENT') throw error; }
+      return json(res, 200, { configured: false });
+    }
     if (req.method === 'GET' && url.pathname === '/api/search') {
       const q = (url.searchParams.get('q') || '').trim();
       if (q.length < 2) return json(res, 400, { error: '请输入至少两个字符' });
