@@ -1,3 +1,13 @@
+---
+title: Echo Study
+emoji: 🎧
+colorFrom: blue
+colorTo: indigo
+sdk: docker
+app_port: 7860
+pinned: false
+---
+
 # Echo Study
 
 一个支持公网部署的视频英语精听网站。视频解析、YouTube 搜索、Whisper 字幕识别和英译中均由网站服务端完成。
