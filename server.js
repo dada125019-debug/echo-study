@@ -1,7 +1,8 @@
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
-const dns = require('dns').promises;
+const dnsModule = require('dns');
+const dns = dnsModule.promises;
 const net = require('net');
 const { Readable } = require('stream');
 const { execFile } = require('child_process');
@@ -19,12 +20,18 @@ const APP_USERNAME = process.env.APP_USERNAME || '111';
 const APP_PASSWORD = process.env.APP_PASSWORD || '';
 const SESSION_SECRET = process.env.SESSION_SECRET || crypto.randomBytes(32).toString('hex');
 
+// Codespaces can receive unusable IPv6 routes for some CDN-backed learning
+// sites. Prefer IPv4 so a working address is attempted before the request
+// reaches its timeout.
+dnsModule.setDefaultResultOrder?.('ipv4first');
+
 if (!APP_PASSWORD) {
   throw new Error('APP_PASSWORD is required');
 }
 const SESSION_MAX_AGE = 7 * 24 * 60 * 60;
 const jobs = new Map();
 const loginAttempts = new Map();
+const extractionCache = new Map();
 const MIME = {
   '.html': 'text/html; charset=utf-8',
   '.css': 'text/css; charset=utf-8',
@@ -160,6 +167,43 @@ function absolute(candidate, base) {
   try { return new URL(decodeHtml(candidate), base).href; } catch { return null; }
 }
 
+async function fetchPageWithRetry(url) {
+  const cached = extractionCache.get(url.href);
+  if (cached && cached.expires > Date.now()) return cached.value;
+
+  const attempts = [12_000, 25_000];
+  let lastError;
+  for (let index = 0; index < attempts.length; index += 1) {
+    try {
+      const response = await fetch(url, {
+        redirect: 'follow',
+        headers: {
+          'user-agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/126 Safari/537.36',
+          'accept-language': 'en-GB,en;q=0.9',
+          accept: 'text/html,*/*',
+          'cache-control': 'no-cache'
+        },
+        signal: AbortSignal.timeout(attempts[index])
+      });
+      const value = { response, html: (await response.text()).slice(0, 5_000_000) };
+      if (response.ok) {
+        extractionCache.set(url.href, { value, expires: Date.now() + 30 * 60 * 1000 });
+      }
+      return value;
+    } catch (error) {
+      lastError = error;
+      if (index + 1 < attempts.length) {
+        await new Promise(resolve => setTimeout(resolve, 400));
+      }
+    }
+  }
+
+  if (lastError?.name === 'TimeoutError' || /aborted|timeout/i.test(lastError?.message || '')) {
+    throw new Error('课程网站响应超时。已自动重试，请稍后再点一次；若持续失败，可先使用“公开视频搜索”或“本地上传”。');
+  }
+  throw lastError;
+}
+
 async function extractPage(pageUrl) {
   const url = await safeUrl(pageUrl);
   const biliId = url.href.match(/(?:video\/|bvid=)(BV[\w]+)/i)?.[1];
@@ -173,19 +217,10 @@ async function extractPage(pageUrl) {
   const direct = /\.(mp4|webm|ogg|m3u8)(\?.*)?$/i.test(url.pathname + url.search);
   if (direct) return { title: path.basename(url.pathname), videoUrl: url.href, captions: [] };
 
-  const response = await fetch(url, {
-    redirect: 'follow',
-    headers: {
-      'user-agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/126 Safari/537.36',
-      'accept-language': 'en-GB,en;q=0.9',
-      accept: 'text/html,*/*'
-    },
-    signal: AbortSignal.timeout(35000)
-  });
+  const { response, html } = await fetchPageWithRetry(url);
   if (!response.ok) throw new Error(`网页返回 ${response.status}`);
   const type = response.headers.get('content-type') || '';
   if (!type.includes('text/html')) throw new Error('该链接不是网页或可播放的视频直链');
-  const html = (await response.text()).slice(0, 5_000_000);
   const pick = patterns => {
     for (const pattern of patterns) {
       const match = html.match(pattern);
@@ -513,7 +548,12 @@ async function api(req, res, url) {
     }
     return json(res, 404, { error: '接口不存在' });
   } catch (error) {
-    return json(res, 422, { error: error.message || '请求失败' });
+    const timedOut = error?.name === 'TimeoutError' || /aborted|timeout/i.test(error?.message || '');
+    return json(res, timedOut ? 504 : 422, {
+      error: timedOut
+        ? '上游资源响应超时，请稍后重试。你也可以先使用本地上传或公开视频搜索。'
+        : error.message || '请求失败'
+    });
   }
 }
 
