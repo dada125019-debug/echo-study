@@ -2,6 +2,7 @@ const $ = selector => document.querySelector(selector);
 const $$ = selector => [...document.querySelectorAll(selector)];
 
 const video = $('#video');
+let hlsPlayer = null;
 const list = $('#transcriptList');
 const dialog = $('#sourceDialog');
 const narrowScreen = window.matchMedia('(max-width: 900px)');
@@ -22,6 +23,35 @@ const state = {
   title: '第 1 期',
   secondsStudied: Number(localStorage.getItem('echo:seconds') || 0)
 };
+
+const CURATED_BASE = 'https://learnenglish.britishcouncil.org/free-resources/general/video-series';
+const CURATED_LESSONS = [
+  { id: 'a1-1', level: 'A1', title: 'They meet', topic: '初次见面与自我介绍', path: 'starting-out/episode-01-they-meet' },
+  { id: 'a1-2', level: 'A1', title: "Tom's party", topic: '派对中的日常交流', path: 'starting-out/episode-02-toms-party' },
+  { id: 'a1-3', level: 'A1', title: 'What do you like doing?', topic: '兴趣与喜好', path: 'starting-out/episode-03-what-do-you-doing' },
+  { id: 'a1-4', level: 'A1', title: 'Where are you?', topic: '地点与问路', path: 'starting-out/episode-04-where-are-you' },
+  { id: 'a1-5', level: 'A1', title: 'Speaking or eating?', topic: '餐厅基础表达', path: 'starting-out/episode-05-speaking-or-eating' },
+  { id: 'a2-1', level: 'A2', title: "I'll pay", topic: '付款与解决问题', path: 'starting-out/episode-06-ill-pay' },
+  { id: 'a2-2', level: 'A2', title: 'A race', topic: '运动与比较', path: 'starting-out/episode-07-race' },
+  { id: 'a2-3', level: 'A2', title: 'Brown bread', topic: '点餐与顾客沟通', path: 'starting-out/episode-08-brown-bread' },
+  { id: 'a2-4', level: 'A2', title: 'Family photos', topic: '家庭成员与照片', path: 'starting-out/episode-09-family-photos' },
+  { id: 'a2-5', level: 'A2', title: 'Sportsman', topic: '描述运动经历', path: 'starting-out/episode-10-sportsman' },
+  { id: 'b1-1', level: 'B1', title: 'Animals', topic: '面试、宠物与城市动物', path: 'wots/animals/animals-scene-1' },
+  { id: 'b1-2', level: 'B1', title: 'Art', topic: '艺术与个人观点', path: 'wots/art/art-scene-1' },
+  { id: 'b1-3', level: 'B1', title: 'Bestival', topic: '音乐节与旅行交流', path: 'wots/bestival/bestival-scene-1' },
+  { id: 'b1-4', level: 'B1', title: 'Big Meal', topic: '聚餐与协作表达', path: 'wots/big-meal/big-meal-scene-1' },
+  { id: 'b1-5', level: 'B1', title: 'Blackpool', topic: '城市旅行与文化体验', path: 'wots/blackpool/blackpool-scene-1' },
+  { id: 'b2-1', level: 'B2', title: 'Countryside is GREAT', topic: '自然景观与文化', path: 'britain-great/countryside-great-part-1' },
+  { id: 'b2-2', level: 'B2', title: 'Creativity is GREAT', topic: '电影与创意产业', path: 'britain-great/creativity-great-part-1' },
+  { id: 'b2-3', level: 'B2', title: 'English is GREAT', topic: '英语语言的历史', path: 'britain-great/english-great-part-1' },
+  { id: 'b2-4', level: 'B2', title: 'Green is GREAT', topic: '环境与绿色科技', path: 'britain-great/green-great-part-1' },
+  { id: 'b2-5', level: 'B2', title: 'Sport is GREAT', topic: '体育场馆与赛事', path: 'britain-great/sport-great-part-1' },
+  { id: 'c1-1', level: 'C1', title: 'Entrepreneurs are GREAT', topic: '创业与商业表达', path: 'britain-great/entrepreneurs-are-great-part-1' },
+  { id: 'c1-2', level: 'C1', title: 'Innovation is GREAT', topic: '工程创新与科技', path: 'britain-great/innovation-great-part-1' },
+  { id: 'c1-3', level: 'C1', title: 'Knowledge is GREAT', topic: '大学、科学与研究', path: 'britain-great/knowledge-great-part-1' },
+  { id: 'c1-4', level: 'C1', title: 'Literature is GREAT', topic: '文学史与作家', path: 'britain-great/literature-great-part-1' },
+  { id: 'c1-5', level: 'C1', title: 'Music is GREAT', topic: '音乐产业与文化', path: 'britain-great/music-great-part-1' }
+].map(item => ({ ...item, url: `${CURATED_BASE}/${item.path}` }));
 
 function updateStickyPlayerHeight() {
   const height = narrowScreen.matches ? Math.ceil($('.player-pane').getBoundingClientRect().height) : 0;
@@ -272,8 +302,22 @@ function loadVideo(src, title) {
   $('#embedPlayer').hidden = true;
   video.hidden = false;
   hideMediaNotice();
-  video.src = src;
-  video.load();
+  if (hlsPlayer) {
+    hlsPlayer.destroy();
+    hlsPlayer = null;
+  }
+  video.removeAttribute('src');
+  if (/\.m3u8(?:$|\?)/i.test(src) && window.Hls?.isSupported()) {
+    hlsPlayer = new window.Hls({ enableWorker: true, maxBufferLength: 30 });
+    hlsPlayer.loadSource(src);
+    hlsPlayer.attachMedia(video);
+    hlsPlayer.on(window.Hls.Events.ERROR, (_event, data) => {
+      if (data.fatal) showMediaNotice('视频流加载失败', '公开课程的视频流暂时不可用，请稍后重试。');
+    });
+  } else {
+    video.src = src;
+    video.load();
+  }
   $('#videoProgressControl').hidden = false;
   $('#videoSeek').value = 0;
   $('#videoSeek').style.setProperty('--seek-progress', '0%');
@@ -401,6 +445,7 @@ async function loadYouTubeExtracted(videoId) {
 
 function loadEmbed(src, title) {
   if (state.objectUrl) { URL.revokeObjectURL(state.objectUrl); state.objectUrl = null; }
+  if (hlsPlayer) { hlsPlayer.destroy(); hlsPlayer = null; }
   video.pause();
   video.removeAttribute('src');
   video.load();
@@ -480,8 +525,68 @@ $$('.source-tab').forEach(button => button.addEventListener('click', () => {
   $$('.source-tab').forEach(x => x.classList.toggle('active', x === button));
   $$('.source-panel').forEach(x => x.classList.toggle('active', x.dataset.panel === button.dataset.source));
   setStatus('');
+  if (button.dataset.source === 'curated') renderCuratedLessons();
   if (button.dataset.source === 'youtube-auth') refreshYoutubeCookiesStatus();
 }));
+
+let curatedLevel = 'A1';
+
+function renderCuratedLessons(level = curatedLevel) {
+  curatedLevel = level;
+  $$('#curatedLevelFilter [data-level]').forEach(button => button.classList.toggle('active', button.dataset.level === level));
+  const lessons = CURATED_LESSONS.filter(item => item.level === level);
+  $('#curatedLessons').innerHTML = lessons.map((item, index) => `
+    <button type="button" class="curated-card" data-curated-id="${esc(item.id)}">
+      <span class="curated-level">${esc(item.level)}</span>
+      <span class="curated-copy">
+        <strong>${String(index + 1).padStart(2, '0')} · ${esc(item.title)}</strong>
+        <span>${esc(item.topic)} · British Council</span>
+      </span>
+      <span class="curated-arrow">›</span>
+    </button>`).join('');
+}
+
+$('#curatedLevelFilter').addEventListener('click', event => {
+  const button = event.target.closest('[data-level]');
+  if (button) renderCuratedLessons(button.dataset.level);
+});
+
+$('#curatedLessons').addEventListener('click', async event => {
+  const card = event.target.closest('[data-curated-id]');
+  if (!card) return;
+  const lesson = CURATED_LESSONS.find(item => item.id === card.dataset.curatedId);
+  if (!lesson) return;
+  card.disabled = true;
+  setStatus(`正在加载 ${lesson.level} · ${lesson.title}…`);
+  try {
+    const data = await request('/api/extract', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ url: lesson.url })
+    });
+    if (!data.videoUrl) throw new Error('该课程暂时没有返回可播放的视频流。');
+    loadVideo(data.videoUrl, `${lesson.level} · ${lesson.title}`);
+    if (data.captions?.[0]) {
+      await loadRemoteCaptions(data.captions[0]);
+      showMediaNotice('英文字幕已加载', '课程已进入逐句精听模式。');
+      setTimeout(hideMediaNotice, 3500);
+    } else if (data.jobId) {
+      state.cues = [];
+      renderList(false);
+      $('#focusNumber').textContent = '--';
+      $('#focusTime').textContent = lesson.level;
+      $('#focusEnglish').textContent = 'Generating timed English captions…';
+      $('#focusChinese').textContent = '正在从公开课程音频生成时间轴字幕与翻译。';
+      pollTranscription(data.jobId).catch(error => showMediaNotice('自动字幕生成失败', error.message));
+    }
+  } catch (error) {
+    setStatus(error.message, true);
+  } finally {
+    card.disabled = false;
+  }
+});
+
+renderCuratedLessons();
 
 async function refreshYoutubeCookiesStatus() {
   try {
@@ -571,6 +676,7 @@ $('#extractButton').addEventListener('click', async () => {
     else if (data.embedUrl) loadEmbed(data.embedUrl, data.title);
     else loadVideo(data.videoUrl, data.title);
     if (data.captions?.[0]) loadRemoteCaptions(data.captions[0]);
+    else if (data.jobId) pollTranscription(data.jobId).catch(error => showMediaNotice('自动字幕生成失败', error.message));
   } catch (error) { setStatus(error.message, true); }
   finally { button.disabled = false; }
 });
