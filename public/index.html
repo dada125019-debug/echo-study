@@ -97,11 +97,28 @@
       <button class="icon-button" aria-label="关闭">×</button>
     </form>
     <div class="source-tabs" role="tablist">
+      <button type="button" class="source-tab" data-source="curated">分级精选</button>
       <button type="button" class="source-tab active" data-source="local">本地上传</button>
       <button type="button" class="source-tab" data-source="link">网页链接</button>
       <button type="button" class="source-tab" data-source="search">关键词搜索</button>
       <button type="button" class="source-tab" data-source="youtube-auth">YouTube 授权</button>
     </div>
+    <section class="source-panel" data-panel="curated">
+      <div class="curated-intro">
+        <div>
+          <strong>按难度开始精听</strong>
+          <p class="hint">精选无需登录的 British Council 公开课程；每级5课，点击即可加载视频并生成学习字幕。</p>
+        </div>
+        <div class="level-filter" id="curatedLevelFilter" aria-label="课程难度">
+          <button type="button" class="active" data-level="A1">A1</button>
+          <button type="button" data-level="A2">A2</button>
+          <button type="button" data-level="B1">B1</button>
+          <button type="button" data-level="B2">B2</button>
+          <button type="button" data-level="C1">C1</button>
+        </div>
+      </div>
+      <div class="curated-lessons" id="curatedLessons"></div>
+    </section>
     <section class="source-panel active" data-panel="local">
       <label class="drop-zone" for="videoInput" id="dropZone">
         <span class="upload-icon">↑</span>
@@ -133,6 +150,7 @@
   </dialog>
 
   <input id="captionInput" type="file" accept=".srt,.vtt,text/vtt" hidden>
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@1/dist/hls.min.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
