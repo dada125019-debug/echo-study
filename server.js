@@ -175,8 +175,12 @@ async function extractPage(pageUrl) {
 
   const response = await fetch(url, {
     redirect: 'follow',
-    headers: { 'user-agent': 'EchoStudy/1.0 (+local learning tool)', accept: 'text/html,*/*' },
-    signal: AbortSignal.timeout(12000)
+    headers: {
+      'user-agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/126 Safari/537.36',
+      'accept-language': 'en-GB,en;q=0.9',
+      accept: 'text/html,*/*'
+    },
+    signal: AbortSignal.timeout(35000)
   });
   if (!response.ok) throw new Error(`网页返回 ${response.status}`);
   const type = response.headers.get('content-type') || '';
@@ -190,6 +194,7 @@ async function extractPage(pageUrl) {
     return null;
   };
   const videoUrl = pick([
+    /<video[^>]+data-video=["']([^"']+)/i,
     /<meta[^>]+property=["']og:video(?::url)?["'][^>]+content=["']([^"']+)/i,
     /<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:video(?::url)?["']/i,
     /<video[^>]+src=["']([^"']+)/i,
@@ -198,8 +203,15 @@ async function extractPage(pageUrl) {
   const titleMatch = html.match(/<meta[^>]+property=["']og:title["'][^>]+content=["']([^"']+)/i) || html.match(/<title[^>]*>([^<]+)/i);
   const captions = [...html.matchAll(/<track[^>]+(?:kind=["']subtitles["'][^>]+)?src=["']([^"']+)["'][^>]*>/gi)]
     .map(m => absolute(m[1], response.url)).filter(Boolean).slice(0, 8);
+  const dataCaption = pick([/<video[^>]+data-caption=["']([^"']+)/i]);
+  if (dataCaption && !captions.includes(dataCaption)) captions.unshift(dataCaption);
   if (!videoUrl) throw new Error('页面没有公开的可播放视频地址。受保护平台请使用其允许的下载文件或视频直链。');
-  return { title: decodeHtml(titleMatch?.[1] || url.hostname), videoUrl, captions };
+  const result = { title: decodeHtml(titleMatch?.[1] || url.hostname), videoUrl, captions };
+  if (!captions.length) {
+    const mediaKey = crypto.createHash('sha1').update(videoUrl).digest('hex').slice(0, 16);
+    result.jobId = startTranscription(`web-${mediaKey}`, videoUrl);
+  }
+  return result;
 }
 
 async function searchArchive(query) {
