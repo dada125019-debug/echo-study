@@ -362,6 +362,27 @@ async function pollTranslation(jobId) {
 }
 
 async function loadYouTube(videoId) {
+  try {
+    await loadYouTubeExtracted(videoId);
+  } catch (error) {
+    const embedUrl = `https://www.youtube-nocookie.com/embed/${encodeURIComponent(videoId)}?rel=0&cc_load_policy=1&cc_lang_pref=en`;
+    loadEmbed(embedUrl, `YouTube · ${videoId}`);
+    state.cues = [];
+    state.current = 0;
+    renderList(false);
+    $('#focusNumber').textContent = '--';
+    $('#focusTime').textContent = 'YouTube';
+    $('#focusEnglish').textContent = 'Anonymous embedded playback is active.';
+    $('#focusChinese').textContent = '已切换到免登录播放，请在播放器中开启 YouTube 字幕。';
+    showMediaNotice(
+      '已切换到免登录播放',
+      'Codespace 的云端 IP 被 YouTube 限制，现使用 YouTube 官方嵌入播放器。可匿名播放并开启其自带字幕；自动语音识别、翻译和四六级标注需要可提取的音频或单独导入字幕。'
+    );
+    setStatus('YouTube 解析受限，已使用免登录嵌入模式。');
+  }
+}
+
+async function loadYouTubeExtracted(videoId) {
   setStatus('正在解析 YouTube 视频与字幕…');
   const data = await request(`/api/youtube/${encodeURIComponent(videoId)}`);
   loadVideo(data.videoUrl, data.title);
