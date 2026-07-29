@@ -215,7 +215,18 @@ async function extractPage(pageUrl) {
     return { title: `YouTube · ${youtubeId}`, youtubeId, captions: [] };
   }
   const direct = /\.(mp4|webm|ogg|m3u8)(\?.*)?$/i.test(url.pathname + url.search);
-  if (direct) return { title: path.basename(url.pathname), videoUrl: url.href, captions: [] };
+  if (direct) {
+    const mediaKey = crypto.createHash('sha1').update(url.href).digest('hex').slice(0, 16);
+    const videoUrl = url.hostname === 'learnenglish.britishcouncil.org' && /\.m3u8$/i.test(url.pathname)
+      ? `/api/hls?url=${encodeURIComponent(url.href)}`
+      : url.href;
+    return {
+      title: path.basename(url.pathname),
+      videoUrl,
+      captions: [],
+      jobId: startTranscription(`direct-${mediaKey}`, url.href)
+    };
+  }
 
   const { response, html } = await fetchPageWithRetry(url);
   if (!response.ok) throw new Error(`网页返回 ${response.status}`);
@@ -496,6 +507,70 @@ async function proxyCaption(source) {
   return text;
 }
 
+function signHlsSource(source) {
+  return crypto.createHmac('sha256', SESSION_SECRET).update(source).digest('hex');
+}
+
+function validHlsSignature(source, signature) {
+  if (!/^[a-f0-9]{64}$/i.test(signature || '')) return false;
+  const expected = signHlsSource(source);
+  return crypto.timingSafeEqual(Buffer.from(signature, 'hex'), Buffer.from(expected, 'hex'));
+}
+
+async function proxyCuratedHls(req, res, source, signature) {
+  const url = await safeUrl(source);
+  const isBritishCouncil = url.hostname === 'learnenglish.britishcouncil.org';
+  if (!isBritishCouncil && !validHlsSignature(url.href, signature)) {
+    throw new Error('该 HLS 媒体来源不在允许列表中');
+  }
+  const headers = {
+    'user-agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/126 Safari/537.36',
+    referer: 'https://learnenglish.britishcouncil.org/'
+  };
+  if (req.headers.range) headers.range = req.headers.range;
+  const response = await fetch(url, {
+    headers,
+    redirect: 'follow',
+    signal: AbortSignal.timeout(30_000)
+  });
+  if (!response.ok && response.status !== 206) throw new Error(`课程视频流返回 ${response.status}`);
+
+  const contentType = response.headers.get('content-type') || '';
+  const isManifest = /\.m3u8$/i.test(url.pathname) || /mpegurl/i.test(contentType);
+  if (isManifest) {
+    const text = await response.text();
+    const rewrite = value => {
+      const resolved = new URL(value, response.url).href;
+      return `/api/hls?url=${encodeURIComponent(resolved)}&sig=${signHlsSource(resolved)}`;
+    };
+    const rewritten = text
+      .split(/\r?\n/)
+      .map(line => {
+        if (!line || line.startsWith('#')) {
+          return line.replace(/URI="([^"]+)"/g, (_, value) => `URI="${rewrite(value)}"`);
+        }
+        return rewrite(line.trim());
+      })
+      .join('\n');
+    res.writeHead(200, {
+      'content-type': 'application/vnd.apple.mpegurl; charset=utf-8',
+      'cache-control': 'public, max-age=60'
+    });
+    return res.end(rewritten);
+  }
+
+  const outputHeaders = {
+    'content-type': contentType || 'application/octet-stream',
+    'cache-control': 'public, max-age=600'
+  };
+  ['content-length', 'content-range', 'accept-ranges'].forEach(name => {
+    const value = response.headers.get(name);
+    if (value) outputHeaders[name] = value;
+  });
+  res.writeHead(response.status, outputHeaders);
+  return Readable.fromWeb(response.body).pipe(res);
+}
+
 async function api(req, res, url) {
   try {
     if (req.method === 'GET' && url.pathname === '/api/health') return json(res, 200, { ok: true });
@@ -541,6 +616,14 @@ async function api(req, res, url) {
       const text = await proxyCaption(url.searchParams.get('url') || '');
       res.writeHead(200, { 'content-type': 'text/plain; charset=utf-8' });
       return res.end(text);
+    }
+    if (req.method === 'GET' && url.pathname === '/api/hls') {
+      return await proxyCuratedHls(
+        req,
+        res,
+        url.searchParams.get('url') || '',
+        url.searchParams.get('sig') || ''
+      );
     }
     if (req.method === 'POST' && url.pathname === '/api/extract') {
       const body = await readBody(req);

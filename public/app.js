@@ -26,32 +26,32 @@ const state = {
 
 const CURATED_BASE = 'https://learnenglish.britishcouncil.org/free-resources/general/video-series';
 const CURATED_LESSONS = [
-  { id: 'a1-1', level: 'A1', title: 'They meet', topic: '初次见面与自我介绍', path: 'starting-out/episode-01-they-meet' },
-  { id: 'a1-2', level: 'A1', title: "Tom's party", topic: '派对中的日常交流', path: 'starting-out/episode-02-toms-party' },
-  { id: 'a1-3', level: 'A1', title: 'What do you like doing?', topic: '兴趣与喜好', path: 'starting-out/episode-03-what-do-you-doing' },
-  { id: 'a1-4', level: 'A1', title: 'Where are you?', topic: '地点与问路', path: 'starting-out/episode-04-where-are-you' },
-  { id: 'a1-5', level: 'A1', title: 'Speaking or eating?', topic: '餐厅基础表达', path: 'starting-out/episode-05-speaking-or-eating' },
-  { id: 'a2-1', level: 'A2', title: "I'll pay", topic: '付款与解决问题', path: 'starting-out/episode-06-ill-pay' },
-  { id: 'a2-2', level: 'A2', title: 'A race', topic: '运动与比较', path: 'starting-out/episode-07-race' },
-  { id: 'a2-3', level: 'A2', title: 'Brown bread', topic: '点餐与顾客沟通', path: 'starting-out/episode-08-brown-bread' },
-  { id: 'a2-4', level: 'A2', title: 'Family photos', topic: '家庭成员与照片', path: 'starting-out/episode-09-family-photos' },
-  { id: 'a2-5', level: 'A2', title: 'Sportsman', topic: '描述运动经历', path: 'starting-out/episode-10-sportsman' },
-  { id: 'b1-1', level: 'B1', title: 'Animals', topic: '面试、宠物与城市动物', path: 'wots/animals/animals-scene-1' },
-  { id: 'b1-2', level: 'B1', title: 'Art', topic: '艺术与个人观点', path: 'wots/art/art-scene-1' },
-  { id: 'b1-3', level: 'B1', title: 'Bestival', topic: '音乐节与旅行交流', path: 'wots/bestival/bestival-scene-1' },
-  { id: 'b1-4', level: 'B1', title: 'Big Meal', topic: '聚餐与协作表达', path: 'wots/big-meal/big-meal-scene-1' },
-  { id: 'b1-5', level: 'B1', title: 'Blackpool', topic: '城市旅行与文化体验', path: 'wots/blackpool/blackpool-scene-1' },
-  { id: 'b2-1', level: 'B2', title: 'Countryside is GREAT', topic: '自然景观与文化', path: 'britain-great/countryside-great-part-1' },
-  { id: 'b2-2', level: 'B2', title: 'Creativity is GREAT', topic: '电影与创意产业', path: 'britain-great/creativity-great-part-1' },
-  { id: 'b2-3', level: 'B2', title: 'English is GREAT', topic: '英语语言的历史', path: 'britain-great/english-great-part-1' },
-  { id: 'b2-4', level: 'B2', title: 'Green is GREAT', topic: '环境与绿色科技', path: 'britain-great/green-great-part-1' },
-  { id: 'b2-5', level: 'B2', title: 'Sport is GREAT', topic: '体育场馆与赛事', path: 'britain-great/sport-great-part-1' },
-  { id: 'c1-1', level: 'C1', title: 'Entrepreneurs are GREAT', topic: '创业与商业表达', path: 'britain-great/entrepreneurs-are-great-part-1' },
-  { id: 'c1-2', level: 'C1', title: 'Innovation is GREAT', topic: '工程创新与科技', path: 'britain-great/innovation-great-part-1' },
-  { id: 'c1-3', level: 'C1', title: 'Knowledge is GREAT', topic: '大学、科学与研究', path: 'britain-great/knowledge-great-part-1' },
-  { id: 'c1-4', level: 'C1', title: 'Literature is GREAT', topic: '文学史与作家', path: 'britain-great/literature-great-part-1' },
-  { id: 'c1-5', level: 'C1', title: 'Music is GREAT', topic: '音乐产业与文化', path: 'britain-great/music-great-part-1' }
-].map(item => ({ ...item, url: `${CURATED_BASE}/${item.path}` }));
+  { id: 'a1-1', level: 'A1', title: 'They meet', topic: '初次见面与自我介绍', provider: 'British Council', videoUrl: `${CURATED_BASE.replace('/free-resources/general/video-series', '')}/video/le_starting-out_s01e01.m3u8` },
+  { id: 'a1-2', level: 'A1', title: "Tom's party", topic: '派对中的日常交流', provider: 'British Council', videoUrl: `${CURATED_BASE.replace('/free-resources/general/video-series', '')}/video/le_starting-out_s01e02.m3u8` },
+  { id: 'a1-3', level: 'A1', title: 'What do you like doing?', topic: '兴趣与喜好', provider: 'British Council', videoUrl: `${CURATED_BASE.replace('/free-resources/general/video-series', '')}/video/le_starting-out_s01e03.m3u8` },
+  { id: 'a1-4', level: 'A1', title: 'Where are you?', topic: '地点与问路', provider: 'British Council', videoUrl: `${CURATED_BASE.replace('/free-resources/general/video-series', '')}/video/le_starting-out_s01e04.m3u8` },
+  { id: 'a1-5', level: 'A1', title: 'Speaking or eating?', topic: '餐厅基础表达', provider: 'British Council', videoUrl: `${CURATED_BASE.replace('/free-resources/general/video-series', '')}/video/le_starting-out_s01e05.m3u8` },
+  { id: 'a2-1', level: 'A2', title: "I'll pay", topic: '付款与解决问题', provider: 'British Council', videoUrl: `${CURATED_BASE.replace('/free-resources/general/video-series', '')}/video/le_starting-out_s01e06.m3u8` },
+  { id: 'a2-2', level: 'A2', title: 'A race', topic: '运动与比较', provider: 'British Council', videoUrl: `${CURATED_BASE.replace('/free-resources/general/video-series', '')}/video/le_starting-out_s01e07.m3u8` },
+  { id: 'a2-3', level: 'A2', title: 'Brown bread', topic: '点餐与顾客沟通', provider: 'British Council', videoUrl: `${CURATED_BASE.replace('/free-resources/general/video-series', '')}/video/le_starting-out_s01e08.m3u8` },
+  { id: 'a2-4', level: 'A2', title: 'Family photos', topic: '家庭成员与照片', provider: 'British Council', videoUrl: `${CURATED_BASE.replace('/free-resources/general/video-series', '')}/video/le_starting-out_s01e09.m3u8` },
+  { id: 'a2-5', level: 'A2', title: 'Sportsman', topic: '描述运动经历', provider: 'British Council', videoUrl: `${CURATED_BASE.replace('/free-resources/general/video-series', '')}/video/le_starting-out_s01e10.m3u8` },
+  { id: 'b1-1', level: 'B1', title: 'Animals', topic: '面试、宠物与城市动物', provider: 'British Council', videoUrl: `${CURATED_BASE.replace('/free-resources/general/video-series', '')}/video/le_wots_s2e03-animals-sc1.m3u8` },
+  { id: 'b1-2', level: 'B1', title: 'Art', topic: '艺术与个人观点', provider: 'British Council', videoUrl: `${CURATED_BASE.replace('/free-resources/general/video-series', '')}/video/le_wots_s2e09-art-sc1.m3u8` },
+  { id: 'b1-3', level: 'B1', title: 'Bestival', topic: '音乐节与旅行交流', provider: 'British Council', videoUrl: `${CURATED_BASE.replace('/free-resources/general/video-series', '')}/video/le_wots_s1e10-bestival-sc1.m3u8` },
+  { id: 'b1-4', level: 'B1', title: 'Big Meal', topic: '聚餐与协作表达', provider: 'British Council', videoUrl: `${CURATED_BASE.replace('/free-resources/general/video-series', '')}/video/le_wots_s1e09-big-meal-sc1.m3u8` },
+  { id: 'b1-5', level: 'B1', title: 'Blackpool', topic: '城市旅行与文化体验', provider: 'British Council', videoUrl: `${CURATED_BASE.replace('/free-resources/general/video-series', '')}/video/le_wots_s1e06-blackpool-sc1.m3u8` },
+  { id: 'b2-1', level: 'B2', title: 'Duck and Cover', topic: '冷战历史与公共安全表达', provider: 'Internet Archive', archiveId: 'DuckandC1951' },
+  { id: 'b2-2', level: 'B2', title: 'How to Be Well Groomed', topic: '个人形象与日常沟通', provider: 'Internet Archive', archiveId: 'HowtoBeW1949' },
+  { id: 'b2-3', level: 'B2', title: 'Body Care and Grooming', topic: '个人形象与日常礼仪', provider: 'Internet Archive', archiveId: 'BodyCare1948' },
+  { id: 'b2-4', level: 'B2', title: 'Better Use of Leisure Time', topic: '时间管理与休闲活动', provider: 'Internet Archive', archiveId: 'BetterUs1950' },
+  { id: 'b2-5', level: 'B2', title: 'Table Manners', topic: '餐桌礼仪与正式表达', provider: 'Internet Archive', archiveId: 'TableMan1947' },
+  { id: 'c1-1', level: 'C1', title: 'Act Your Age', topic: '情绪成熟与行为分析', provider: 'Internet Archive', archiveId: '0193_Act_Your_Age_E00002_12_30_45_12' },
+  { id: 'c1-2', level: 'C1', title: 'Attitudes and Health', topic: '心理态度与健康论述', provider: 'Internet Archive', archiveId: '0034_Attitudes_and_Health_10_11_45_00' },
+  { id: 'c1-3', level: 'C1', title: 'Health: Your Cleanliness', topic: '公共健康与卫生教育', provider: 'Internet Archive', archiveId: '0589_Health_Your_Cleanliness_E01763_05_14_56_00' },
+  { id: 'c1-4', level: 'C1', title: 'Atomic Alert', topic: '媒体话语与民防历史', provider: 'Internet Archive', archiveId: 'AtomicAl1951' },
+  { id: 'c1-5', level: 'C1', title: 'A Wonderful New World', topic: '工业文化与说服性语言', provider: 'Internet Archive', archiveId: 'Wonderfu1958' }
+];
 
 function updateStickyPlayerHeight() {
   const height = narrowScreen.matches ? Math.ceil($('.player-pane').getBoundingClientRect().height) : 0;
@@ -540,7 +540,7 @@ function renderCuratedLessons(level = curatedLevel) {
       <span class="curated-level">${esc(item.level)}</span>
       <span class="curated-copy">
         <strong>${String(index + 1).padStart(2, '0')} · ${esc(item.title)}</strong>
-        <span>${esc(item.topic)} · British Council</span>
+        <span>${esc(item.topic)} · ${esc(item.provider)}</span>
       </span>
       <span class="curated-arrow">›</span>
     </button>`).join('');
@@ -559,15 +559,18 @@ $('#curatedLessons').addEventListener('click', async event => {
   card.disabled = true;
   setStatus(`正在加载 ${lesson.level} · ${lesson.title}…`);
   try {
-    const data = await request('/api/extract', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ url: lesson.url })
+    const data = lesson.archiveId
+      ? await request(`/api/archive/${encodeURIComponent(lesson.archiveId)}`)
+      : await request('/api/extract', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ url: lesson.videoUrl })
     });
     if (!data.videoUrl) throw new Error('该课程暂时没有返回可播放的视频流。');
     loadVideo(data.videoUrl, `${lesson.level} · ${lesson.title}`);
-    if (data.captions?.[0]) {
-      await loadRemoteCaptions(data.captions[0]);
+    const captionSource = data.captions?.[0] || data.captionUrl;
+    if (captionSource) {
+      await loadRemoteCaptions(captionSource);
       showMediaNotice('英文字幕已加载', '课程已进入逐句精听模式。');
       setTimeout(hideMediaNotice, 3500);
     } else if (data.jobId) {
